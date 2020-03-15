@@ -1,20 +1,21 @@
-FROM debian
+FROM debian:buster-slim
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        wget ca-certificates bzip2 kmod procps \
-    && rm -r /var/lib/apt/lists/* \
-    && apt-get clean
+ENV FAH_VERSION_MINOR=7.5.1
+ENV FAH_VERSION_MAJOR=7.5
 
-RUN wget -q https://download.foldingathome.org/releases/public/release/fahclient/debian-stable-64bit/v7.5/fahclient_7.5.1_amd64.deb
-RUN dpkg -i fahclient_7.5.1_amd64.deb
-RUN rm -f fahclient_7.5.1_amd64.deb
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+        curl adduser bzip2 ca-certificates kmod procps &&\
+        curl --insecure https://download.foldingathome.org/releases/public/release/fahclient/debian-stable-64bit/v${FAH_VERSION_MAJOR}/fahclient_${FAH_VERSION_MINOR}_amd64.deb > /tmp/fah.deb &&\
+        mkdir -p /etc/fahclient/ &&\
+        touch /etc/fahclient/config.xml &&\
+        dpkg --install /tmp/fah.deb &&\
+        apt-get remove -y curl &&\
+        apt-get autoremove -y &&\
+        rm --recursive --verbose --force /tmp/* /var/log/* /var/lib/apt/*
 
 EXPOSE 36330 7396
-
-#RUN wget -q http://us.download.nvidia.com/tesla/440.64.00/NVIDIA-Linux-x86_64-440.64.00.run
-#RUN chmod +x NVIDIA-Linux-x86_64-440.64.00.run
-#RUN sh /NVIDIA-Linux-x86_64-440.64.00.run -s --no-kernel-module
 
 COPY start.sh /
 
